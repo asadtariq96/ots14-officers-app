@@ -8,7 +8,7 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table'
-import { ArrowUpDown, ChevronLeft, ChevronRight, Eye, Pencil, Trash2 } from 'lucide-react'
+import { ArrowUpDown, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import type { Officer } from '../../types'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -115,29 +115,36 @@ export function OfficersTable({ officers, isAdmin, onView, onEdit, onDelete }: O
           </Badge>
         ),
       },
-      {
-        id: 'actions',
-        header: '',
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => onView(row.original)}>
-              <Eye className="h-4 w-4" />
-            </Button>
-            {isAdmin ? (
-              <>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => onEdit(row.original)}>
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onDelete(row.original)}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </>
-            ) : null}
-          </div>
-        ),
-      },
+      ...(isAdmin
+        ? [
+            {
+              id: 'actions',
+              header: '',
+              cell: ({ row }: { row: import('@tanstack/react-table').Row<Officer> }) => (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    onClick={(e) => { e.stopPropagation(); onEdit(row.original) }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => { e.stopPropagation(); onDelete(row.original) }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ),
+            } satisfies ColumnDef<Officer>,
+          ]
+        : []),
     ],
-    [isAdmin, onDelete, onEdit, onView],
+    [isAdmin, onDelete, onEdit],
   )
 
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 12 })
@@ -197,7 +204,8 @@ export function OfficersTable({ officers, isAdmin, onView, onEdit, onDelete }: O
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className={`border-b border-border/40 transition-colors ${row.original.status === 'deceased' ? 'bg-muted/20' : 'hover:bg-muted/20'}`}
+                  className={`cursor-pointer border-b border-border/40 transition-colors ${row.original.status === 'deceased' ? 'bg-muted/20' : 'hover:bg-muted/20'}`}
+                  onClick={() => onView(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-3">
