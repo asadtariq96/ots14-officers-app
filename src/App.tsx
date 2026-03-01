@@ -31,7 +31,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/*" element={<ProtectedLayout />} />
       </Routes>
-      {process.env.NODE_ENV === 'development' && <Agentation />}
+      {import.meta.env.DEV && <Agentation />}
     </>
   )
 }
