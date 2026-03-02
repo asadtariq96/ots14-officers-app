@@ -19,6 +19,40 @@ CRUD web app for managing Pakistan Army 14th OTS officer records with role-based
 
 New users are automatically assigned the `viewer` role on sign-up.
 
+## How access works
+
+```mermaid
+flowchart LR
+  N["sign up"] --> T["handle_new_user<br/>trigger"]
+  T --> P[("profiles<br/>role defaults to viewer")]
+  Q["request"] --> A["auth.uid()"]
+  A --> C["current_role()<br/>security definer"]
+  C --> P
+  C --> D{"admin?"}
+  D -->|"no"| RO["select only"]
+  D -->|"yes"| RW["select, insert, update, delete"]
+  RO --> O[("officers<br/>subscriptions")]
+  RW --> O
+```
+
+Eleven row-level policies, and every one of them asks the same function. The role is stored in
+`profiles` rather than carried as a JWT claim, so promoting somebody takes effect on their next
+query instead of their next login. `current_role()` is a security-definer function that reads the
+caller's row and nothing else, which keeps the policy text to one comparison per table and gives
+the whole authorisation model a single place to audit.
+
+New accounts get `viewer` from the trigger, never from the client, so there is no request shape a
+signed-up user can send to arrive as an admin.
+
+Storage follows the same rule. The `profile-pics` bucket allows authenticated reads and admin-only
+writes, so the bucket policy and the table policy cannot drift apart.
+
+## Data
+
+This repository ships the schema, the seed script and the interface. It contains no records.
+`scripts/seed-from-excel.ts` reads a spreadsheet you supply yourself and needs the service-role
+key, which is why that variable is documented as separate from the anon key.
+
 ## Local Setup
 
 1. Install dependencies:
